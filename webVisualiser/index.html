@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perlin Noise Terrain</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f3f4f6;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      border: 1px solid black;
+    }
+    .controls {
+      margin: 20px;
+    }
+    label {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Perlin Noise Terrain Generator</h1>
+  <div class="controls">
+    <label for="seed">Seed:</label>
+    <input type="number" id="seed" value="0" />
+    <label for="height">Max Height:</label>
+    <input type="number" id="height" value="65535" />
+    <button onclick="generateTerrain()">Generate</button>
+  </div>
+  <canvas id="canvas" width="512" height="512"></canvas>
+  <script>
+    async function generateTerrain() {
+      const seed = parseInt(document.getElementById('seed').value);
+      const height = parseInt(document.getElementById('height').value);
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      const response = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ length: canvas.width, breadth: canvas.height, height, seed })
+      });
+
+      const heightMap = await response.json();
+      const imageData = ctx.createImageData(canvas.width, canvas.height);
+
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const value = heightMap[y][x] / height * 255;
+          const index = (y * canvas.width + x) * 4;
+          imageData.data[index] = value; // Red
+          imageData.data[index + 1] = value; // Green
+          imageData.data[index + 2] = value; // Blue
+          imageData.data[index + 3] = 255; // Alpha
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+  </script>
+</body>
+</html>
